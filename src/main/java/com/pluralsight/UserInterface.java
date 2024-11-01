@@ -1,6 +1,8 @@
 package com.pluralsight;
 
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class UserInterface {
@@ -140,7 +142,7 @@ public class UserInterface {
             double price = Double.parseDouble(keyboard.nextLine());
 
 
-            dealership.addVehicle(new Vehicle(vin,year,odometer,make,model,vehicleType,color,price));
+            dealership.addVehicle(new Vehicle(vin, year, odometer, make, model, vehicleType, color, price));
             System.out.println("Vehicle Added!");
 
             //Ask user for additional vehicles
@@ -159,7 +161,7 @@ public class UserInterface {
     }
 
     public static void processRemoveVehicleRequest() {
-        System.out.println("Please enter the Vin you would like to remove: ");
+        System.out.print("Please enter the Vin you would like to remove: ");
         int userVin = Integer.parseInt(keyboard.nextLine());
         boolean vehicleFound = false;
 
@@ -172,21 +174,162 @@ public class UserInterface {
                 break;
             }
         }
-
         if (!vehicleFound) {
             System.out.println("No VIN matching " + userVin + " is found.");
         }
     }
 
-    public static void processContractScreen(){
+    public static void processContract() {
 
-        ContractDataManager.getContracts(dealership);
+        while (true) {
+            System.out.print("are you wanting to lease or sale");
+            String opt = keyboard.nextLine().trim();
 
-        for(Contract contract: dealership.getContracts()){
-            System.out.println(contract.getCustomerName());
+            if (opt.equalsIgnoreCase("lease")) {
+                int vin, year, odometer;
+                double price = 0;
+                String make, model, vehicleType, color;
+
+                String contactType = "LEASE";
+                String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+                System.out.print("please enter your name: ");
+                String customerName = keyboard.nextLine().trim();
+                System.out.print("please enter your email: ");
+                String email = keyboard.nextLine().trim();
+                System.out.print("enter vin of vehicle wanting to lease: ");
+                int userVin = Integer.parseInt(keyboard.nextLine());
+                boolean matchFound = false; // Initialize a flag for tracking if a match is found
+
+                for (Vehicle vehicle : dealership.getAllVehicles()) {
+                    if (userVin == vehicle.getVin()) {
+                        // Set all vehicle details if VIN matches
+                        vin = vehicle.getVin();
+                        year = vehicle.getYear();
+                        model = vehicle.getModel();
+                        make = vehicle.getMake();
+                        vehicleType = vehicle.getVehicleType();
+                        color = vehicle.getColor();
+                        odometer = vehicle.getOdometer();
+                        price = vehicle.getPrice();
+
+                        matchFound = true; // Update flag to indicate a match
+                        break; // Exit loop once a match is found
+                    }
+                }
+
+// Check if no match was found after the loop
+                if (!matchFound) {
+                    System.out.print("No VIN matching " + userVin + " is found.");
+                }
+
+                double expectedEndingValue = price * 0.50;
+                double leasingFee = price * .07;
+                double totalPrice = leasingFee + (price - expectedEndingValue);
+                double monthlyPayment = totalPrice / 12;
+
+                dealership.addContract(new Lease(date,
+                        customerName,
+                        email,
+                        false,
+                        totalPrice,
+                        monthlyPayment,
+                        expectedEndingValue,
+                        leasingFee));
+
+                System.out.println("Lease contract completed and added successfully");
+
+                System.out.print("Would you like to create another contract? (yes or no): ");
+                String addOtherCont = keyboard.nextLine().trim();
+
+                if (addOtherCont.equalsIgnoreCase("no")){
+                   ContractDataManager.saveContract(new Dealership ());
+                }
+            } else {
+                int vin, year, odometer;
+                double price = 0;
+                String make, model, vehicleType, color;
+
+
+                String contactType = "SALE";
+                String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+                System.out.print("please enter your name: ");
+                String customerName = keyboard.nextLine().trim();
+                System.out.print("please enter your email: ");
+                String email = keyboard.nextLine().trim();
+                System.out.print("enter vin of vehicle wanting to lease: ");
+                int userVin = Integer.parseInt(keyboard.nextLine());boolean matchFound = false; // Initialize a flag for tracking if a match is found
+
+                for (Vehicle vehicle : dealership.getAllVehicles()) {
+                    if (userVin == vehicle.getVin()) {
+                        // Set all vehicle details if VIN matches
+                        vin = vehicle.getVin();
+                        year = vehicle.getYear();
+                        model = vehicle.getModel();
+                        make = vehicle.getMake();
+                        vehicleType = vehicle.getVehicleType();
+                        color = vehicle.getColor();
+                        odometer = vehicle.getOdometer();
+                        price = vehicle.getPrice();
+
+                        matchFound = true; // Update flag to indicate a match
+                        break; // Exit loop once a match is found
+                    }
+                }
+
+// Check if no match was found after the loop
+                if (!matchFound) {
+                    System.out.println("No VIN matching " + userVin + " is found.");
+                }
+
+                double salesTax = .05;
+                    int recordingFee = 100;
+                    int proccessingFee = (price < 10000) ? 295 : 495;
+                    double totalPrice = (price * salesTax) + recordingFee + proccessingFee;
+
+                    System.out.print("Do you want to finance? yes or no: ");
+                    String userinput = keyboard.nextLine().trim();
+                    boolean financing = (userinput.equalsIgnoreCase("yes")) ? true : false;
+                    double monthlyPayment = totalPrice / 12;
+
+                    dealership.addContract(new Sale(date,
+                            customerName,
+                            email,
+                            true,
+                            totalPrice,
+                            monthlyPayment,
+                            salesTax,
+                            recordingFee,
+                            proccessingFee,
+                            financing
+                    ));
+                    System.out.println("Sale contract completed and added successfully");
+                }
+            }
         }
-        }
 
+    public static void contractScreen() {
+
+        while (true) {
+            System.out.print("""
+                        1 - create new contract
+                        2 - view existing contracts
+                  
+                    """);
+            int opt = Integer.parseInt(keyboard.nextLine());
+            if (opt == 1) {
+                processContract();
+            } else if (opt == 2) {
+                ContractDataManager.getContracts(dealership);
+                for (Contract contract : dealership.getContracts()) {
+                    System.out.println(contract.getCustomerName());
+
+
+                }
+            } else {
+                System.out.println("invalid option, try again");
+            }
+        }
     }
+}
 
 

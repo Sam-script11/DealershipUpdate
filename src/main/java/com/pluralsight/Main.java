@@ -52,7 +52,7 @@ public class Main  {
                     System.out.println("-----------");
                     break;
                 case 10:
-                    UserInterface.processContractScreen();
+                    UserInterface.contractScreen();
                     System.out.println("-----------");
                     break;
                 case 99:

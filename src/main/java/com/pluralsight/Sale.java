@@ -47,16 +47,8 @@ public class Sale extends Contract{
     }
 
     @Override
-    public void getTotalPrice() {
-
-        if(totalPrice <=10000) {
-            this.totalPrice = totalPrice + (totalPrice * salesTaxAmount) + recordingFee + 295;
-        }
-        this.totalPrice = totalPrice + (totalPrice * salesTaxAmount) + recordingFee + 495;
-
-
-
-
+    public double getTotalPrice() {
+        return totalPrice;
     }
 
     @Override

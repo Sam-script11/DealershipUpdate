@@ -8,7 +8,7 @@ public class ContractDataManager {
 
 //Contract testCon = new Sale("10/31/2024","Sam",true,25000.00,0,125.00,25,25,false);
 
-    public static void getContracts( Dealership dealership) {
+    public static void getContracts(Dealership dealership) {
 
 
         try {
@@ -92,12 +92,32 @@ public class ContractDataManager {
             e.printStackTrace();
         }
     }
-    public static void saveContract(Contract newContract) {
+    public static  void saveContract(Dealership contracts) {
+
       //  Contract testCon = new Sale("10/31/2024","Sam",true,25000.00,0,125.00,25,25,false);
 
         try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter("src/main/resources/contracts.csv"));
+            BufferedWriter bw = new BufferedWriter(new FileWriter("src/main/resources/contracts.csv",true));
 //String typeOfcontract = testCon.getClass().getSimpleName().toUpperCase();
+//            vin = vehicle.getVin();
+//            year = vehicle.getYear();
+//            model = vehicle.getModel();
+//            make = vehicle.getMake();
+//            vehicleType = vehicle.getVehicleType();
+//            color = vehicle.getColor();
+//            odometer = vehicle.getOdometer();
+//            price = vehicle.getPrice();
+
+            for (Contract contract: contracts.getContracts()){
+                if (contract instanceof Lease){
+
+                    //String leaseEntry = String.format("%s|%d|%s|%s|%s|%s|%d|%.2f\n",contract.date,contract.customerName,contract.vehicleSold,contract.totalPrice,contract.monthlyPayment);
+                   // bw.write(leaseEntry);
+
+
+
+                }
+            }
 
             //Release file
             bw.close();

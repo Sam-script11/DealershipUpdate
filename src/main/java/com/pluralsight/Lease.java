@@ -28,9 +28,9 @@ public class Lease extends Contract{
 
 
     @Override
-    public void getTotalPrice() {
+    public double getTotalPrice() {
 
-
+        return totalPrice;
 
     }
 
