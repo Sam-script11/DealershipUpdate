@@ -52,7 +52,7 @@ public class Sale extends Contract{
     }
 
     @Override
-    public void getMonthlyPayment() {
+    public double getMonthlyPayment() {
         if(this.wantToFinance && totalPrice >= 10000) {
             this.monthlyPayment = (totalPrice * 0.003542 * Math.pow(1 + 0.003542, 48)) / (Math.pow(1 + 0.003542, 48) - 1);
 
@@ -61,5 +61,7 @@ public class Sale extends Contract{
 
         }
 
+        return this.monthlyPayment;
     }
+
 }

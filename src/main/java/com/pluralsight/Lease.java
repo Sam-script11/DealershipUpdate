@@ -35,7 +35,9 @@ public class Lease extends Contract{
     }
 
     @Override
-    public void getMonthlyPayment() {
+    public double getMonthlyPayment() {
+
+        return monthlyPayment;
 
     }
 }

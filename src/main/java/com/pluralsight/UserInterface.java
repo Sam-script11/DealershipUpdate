@@ -182,7 +182,7 @@ public class UserInterface {
     public static void processContract() {
 
         while (true) {
-            System.out.print("are you wanting to lease or sale");
+            System.out.print("are you wanting to lease or sale: ");
             String opt = keyboard.nextLine().trim();
 
             if (opt.equalsIgnoreCase("lease")) {
@@ -217,7 +217,7 @@ public class UserInterface {
                     }
                 }
 
-// Check if no match was found after the loop
+                // Check if no match was found after the loop
                 if (!matchFound) {
                     System.out.print("No VIN matching " + userVin + " is found.");
                 }
@@ -241,9 +241,13 @@ public class UserInterface {
                 System.out.print("Would you like to create another contract? (yes or no): ");
                 String addOtherCont = keyboard.nextLine().trim();
 
-                if (addOtherCont.equalsIgnoreCase("no")){
-                   ContractDataManager.saveContract(new Dealership ());
+                if (addOtherCont.equalsIgnoreCase("no")) {
+                    ContractDataManager.saveContract(dealership);
+                    break;
+                } else {
+                    return;
                 }
+
             } else {
                 int vin, year, odometer;
                 double price = 0;
@@ -257,7 +261,8 @@ public class UserInterface {
                 System.out.print("please enter your email: ");
                 String email = keyboard.nextLine().trim();
                 System.out.print("enter vin of vehicle wanting to lease: ");
-                int userVin = Integer.parseInt(keyboard.nextLine());boolean matchFound = false; // Initialize a flag for tracking if a match is found
+                int userVin = Integer.parseInt(keyboard.nextLine());
+                boolean matchFound = false; // Initialize a flag for tracking if a match is found
 
                 for (Vehicle vehicle : dealership.getAllVehicles()) {
                     if (userVin == vehicle.getVin()) {
@@ -276,58 +281,73 @@ public class UserInterface {
                     }
                 }
 
-// Check if no match was found after the loop
+                // Check if no match was found after the loop
                 if (!matchFound) {
                     System.out.println("No VIN matching " + userVin + " is found.");
                 }
 
-                double salesTax = .05;
-                    int recordingFee = 100;
-                    int proccessingFee = (price < 10000) ? 295 : 495;
-                    double totalPrice = (price * salesTax) + recordingFee + proccessingFee;
+                double salesTax = price * .05;
+                int recordingFee = 100;
+                int proccessingFee = (price < 10000) ? 295 : 495;
+                double totalPrice = (price * salesTax) + recordingFee + proccessingFee;
 
-                    System.out.print("Do you want to finance? yes or no: ");
-                    String userinput = keyboard.nextLine().trim();
-                    boolean financing = (userinput.equalsIgnoreCase("yes")) ? true : false;
-                    double monthlyPayment = totalPrice / 12;
+                System.out.print("Do you want to finance? yes or no: ");
+                String userinput = keyboard.nextLine().trim();
+                boolean financing = (userinput.equalsIgnoreCase("yes")) ? true : false;
+                double monthlyPayment = totalPrice / 12;
 
-                    dealership.addContract(new Sale(date,
-                            customerName,
-                            email,
-                            true,
-                            totalPrice,
-                            monthlyPayment,
-                            salesTax,
-                            recordingFee,
-                            proccessingFee,
-                            financing
-                    ));
-                    System.out.println("Sale contract completed and added successfully");
+                dealership.addContract(new Sale(date,
+                        customerName,
+                        email,
+                        true,
+                        totalPrice,
+                        monthlyPayment,
+                        salesTax,
+                        recordingFee,
+                        proccessingFee,
+                        financing
+                ));
+                System.out.println("Sale contract completed and added successfully");
+
+                System.out.print("Would you like to create another contract? (yes or no): ");
+                String addOtherCont = keyboard.nextLine().trim();
+
+                if (addOtherCont.equalsIgnoreCase("no")) {
+                    ContractDataManager.saveContract(dealership);
+                    break;
+                } else {
+                    return;
                 }
             }
         }
+    }
 
     public static void contractScreen() {
+        ContractDataManager.getContracts(dealership);
 
         while (true) {
             System.out.print("""
-                        1 - create new contract
-                        2 - view existing contracts
-                  
-                    """);
+                    1 - Create new contract
+                    2 - View existing contracts
+                    3 - Exit to home screen
+                    
+                    Please enter your selection:""");
             int opt = Integer.parseInt(keyboard.nextLine());
-            if (opt == 1) {
-                processContract();
-            } else if (opt == 2) {
-                ContractDataManager.getContracts(dealership);
-                for (Contract contract : dealership.getContracts()) {
-                    System.out.println(contract.getCustomerName());
-
-
-                }
-            } else {
-                System.out.println("invalid option, try again");
+            switch (opt) {
+                case 1:
+                    processContract();
+                    break;
+                case 2:
+                    for (Contract contract : dealership.getContracts()) {
+                        System.out.println(contract.getCustomerName());
+                    }
+                    break;
+                case 3:
+                    return;
+                default:
+                    System.out.println("Invalid option, try again");
             }
+
         }
     }
 }
