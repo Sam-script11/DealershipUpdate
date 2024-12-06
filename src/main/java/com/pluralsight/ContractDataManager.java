@@ -2,9 +2,6 @@ package com.pluralsight;
 
 import org.apache.commons.dbcp2.BasicDataSource;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -23,10 +20,10 @@ public class ContractDataManager {
 
     public void getContracts(Dealership dealership) {
         try (Connection connection = dataSource.getConnection()) {
-            //Try block handles lease table
+            //Try block handles lease_contract table
             try (PreparedStatement preparedStatement = connection.prepareStatement("""
-                     SELECT * FROM lease_contracts""");
-                    ResultSet results = preparedStatement.executeQuery()) {
+                    SELECT * FROM lease_contracts""");
+                 ResultSet results = preparedStatement.executeQuery()) {
 
                 while (results.next()) {
                     String date = results.getString("date");
@@ -55,8 +52,9 @@ public class ContractDataManager {
                 throw new SQLException(e);
             }
 
+            //Try block handles sales_contract table
             try (PreparedStatement preparedStatement = connection.prepareStatement("""
-                     SELECT * FROM sales_contracts""");
+                    SELECT * FROM sales_contracts""");
                  ResultSet results = preparedStatement.executeQuery()) {
 
                 while (results.next()) {
@@ -84,11 +82,9 @@ public class ContractDataManager {
                             financing));
                 }
 
-            } catch(SQLException e){
+            } catch (SQLException e) {
                 throw new SQLException(e);
             }
-
-
 
 
         } catch (SQLException e) {
@@ -96,117 +92,83 @@ public class ContractDataManager {
         }
     }
 
-        public void saveLeaseContract (Contract contract){
-            String contractType, date, customerName, email, make = "", model = "", vehicleType = "", color = "";
-            int vin = 0, odometer = 0, year = 0;
-            double price = 0, salesTax, recordingFee, processingFee, totalPrice, monthlyPayment;
-            boolean financing, vehicleSold;
+    public void saveContract(Contract contract, int VIN) {
+//            String contractType, date, customerName, email, make = "", model = "", vehicleType = "", color = "";
+//            int vin = 0, odometer = 0, year = 0;
+//            double price = 0, salesTax, recordingFee, processingFee, totalPrice, monthlyPayment;
+//            boolean financing, vehicleSold;
 
-            try {
-                BufferedWriter bw = new BufferedWriter(new FileWriter("src/main/resources/contracts.csv"));
+        try (Connection connection = dataSource.getConnection()) {
 
-                for (Contract c : dealership.getContracts()) {
-                    if (contract instanceof Sale) {
-                        contractType = "SALE";
-                        date = contract.getDate();
-                        customerName = contract.getCustomerName();
-                        email = contract.getEmail();
-                        vehicleSold = contract.isVehicleSold();
-                        totalPrice = contract.getTotalPrice();
-                        monthlyPayment = contract.getMonthlyPayment();
-                        salesTax = ((Sale) contract).getSalesTaxAmount();
-                        recordingFee = ((Sale) contract).getRecordingFee();
-                        processingFee = ((Sale) contract).getProcessingFee();
-                        financing = ((Sale) contract).isWantToFinance();
+            if (contract instanceof Sale) {
+                try (PreparedStatement preparedStatement = connection.prepareStatement("""
+                         INSERT INTO sales_contracts (date, VIN, CustomerName, Email, VehicleSold, TotalPrice,\s
+                         MonthlyPayment, SalesTaxAmount, RecordingFee, ProcessingFee, WantToFinance )
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        \s""", PreparedStatement.RETURN_GENERATED_KEYS)) {
 
-                        for (Vehicle vehicle : dealership.getAllVehicles()) {
-                            vin = vehicle.getVin();
-                            year = vehicle.getYear();
-                            make = vehicle.getMake();
-                            model = vehicle.getModel();
-                            vehicleType = vehicle.getVehicleType();
-                            color = vehicle.getColor();
-                            odometer = vehicle.getOdometer();
-                            price = vehicle.getPrice();
+                    preparedStatement.setString(1, contract.getDate());
+                    preparedStatement.setInt(2, VIN);
+                    preparedStatement.setString(3, contract.getCustomerName());
+                    preparedStatement.setString(4, contract.getEmail());
+                    preparedStatement.setBoolean(5, contract.isVehicleSold());
+                    preparedStatement.setDouble(6, contract.getTotalPrice());
+                    preparedStatement.setDouble(7, contract.getMonthlyPayment());
+                    preparedStatement.setDouble(8, ((Sale) contract).getSalesTaxAmount());
+                    preparedStatement.setInt(9, ((Sale) contract).getRecordingFee());
+                    preparedStatement.setInt(10, ((Sale) contract).getProcessingFee());
+                    preparedStatement.setBoolean(11, ((Sale) contract).isWantToFinance());
+
+                    int rows = preparedStatement.executeUpdate();
+
+                    System.out.printf("Rows updated: %d\n", rows);
+
+                    try (ResultSet keys = preparedStatement.getGeneratedKeys()) {
+                        while (keys.next()) {
+                            System.out.printf("%d key was added\n", keys.getInt(1));
                         }
 
-                        //SALE|20210928|Dana Wyatt|dana@texas.com|10112|1993|Ford|Explorer|SUV|Red|525123|995.00|49.75|100.00|295.00|1439.75|NO|0.00
-                        String saleEntry = String.format("%s|%s|%s|%s|%d|%d|%s|%s|%s|%s|%d|%.2f|%.2f|%.2f|%.2f|%.2f|%s|%.2f\n",
-                                contractType,
-                                date,
-                                customerName,
-                                email,
-                                vin,
-                                year,
-                                make,
-                                model,
-                                vehicleType,
-                                color,
-                                odometer,
-                                price,
-                                salesTax,
-                                recordingFee,
-                                processingFee,
-                                totalPrice,
-                                financing,
-                                monthlyPayment
-                        );
-
-                        bw.write(saleEntry);
-
-                    } else if (contract instanceof Lease) {
-
-                        contractType = "LEASE";
-                        date = contract.getDate();
-                        customerName = contract.getCustomerName();
-                        email = contract.getEmail();
-                        vehicleSold = contract.isVehicleSold();
-                        totalPrice = contract.getTotalPrice();
-                        monthlyPayment = contract.getMonthlyPayment();
-                        double expectedEndingValue = ((Lease) contract).getExpectedEndingValue();
-                        double leaseFee = ((Lease) contract).getLeaseFee();
-
-                        for (Vehicle vehicle : dealership.getAllVehicles()) {
-                            vin = vehicle.getVin();
-                            year = vehicle.getYear();
-                            make = vehicle.getMake();
-                            model = vehicle.getModel();
-                            vehicleType = vehicle.getVehicleType();
-                            color = vehicle.getColor();
-                            odometer = vehicle.getOdometer();
-                            price = vehicle.getPrice();
-                        }
-
-                        //LEASE|20210928|Zachary Westly|zach@texas.com|37846|2021|Chevrolet|Silverado|truck|Black|2750|31995.00|15997.50|2239.65|18337.15|541.39
-                        String leaseEntry = String.format("%s|%s|%s|%s|%d|%d|%s|%s|%s|%s|%d|%.2f|%.2f|%.2f|%.2f|%.2f\n",
-                                contractType,
-                                date,
-                                customerName,
-                                email,
-                                vin,
-                                year,
-                                make,
-                                model,
-                                vehicleType,
-                                color,
-                                odometer,
-                                price,
-                                expectedEndingValue,
-                                leaseFee,
-                                totalPrice,
-                                monthlyPayment
-                        );
-
-                        bw.write(leaseEntry);
+                    } catch (SQLException e) {
+                        throw new SQLException(e);
                     }
                 }
+            } else if (contract instanceof Lease) {
+                try (PreparedStatement preparedStatement = connection.prepareStatement("""
+                        INSERT INTO lease_contracts (date, VIN, CustomerName, Email, VehicleSold, TotalPrice, MonthlyPayment,
+                        ExpectedEndingValue, LeaseFee)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, PreparedStatement.RETURN_GENERATED_KEYS)) {
 
-                //Release file
-                bw.close();
+                    preparedStatement.setString(1, contract.getDate());
+                    preparedStatement.setInt(2, VIN);
+                    preparedStatement.setString(3, contract.getCustomerName());
+                    preparedStatement.setString(4, contract.getEmail());
+                    preparedStatement.setBoolean(5, contract.isVehicleSold());
+                    preparedStatement.setDouble(6, contract.getTotalPrice());
+                    preparedStatement.setDouble(7, contract.getMonthlyPayment());
+                    preparedStatement.setDouble(8, ((Lease) contract).getExpectedEndingValue());
+                    preparedStatement.setDouble(9, ((Lease) contract).getLeaseFee());
 
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                    int rows = preparedStatement.executeUpdate();
+
+                    System.out.printf("Rows updated: %d\n", rows);
+
+                    try (ResultSet keys = preparedStatement.getGeneratedKeys()) {
+                        while (keys.next()) {
+                            System.out.printf("%d key was added\n", keys.getInt(1));
+                        }
+
+                    }
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
+
     }
+
+
+}
 

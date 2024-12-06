@@ -245,6 +245,7 @@ public class UserInterface {
                         monthlyPayment,
                         expectedEndingValue,
                         leasingFee);
+
                 dealership.addContract(lease);
 
                 System.out.println("Lease contract completed and added successfully");
@@ -253,7 +254,7 @@ public class UserInterface {
                 String addOtherCont = keyboard.nextLine().trim();
 
                 if (addOtherCont.equalsIgnoreCase("no")) {
-                    ContractDataManager.saveLeaseContract(lease);
+                    contractDataManager.saveContract(lease, vin);
                     break;
                 } else {
                     return;
@@ -297,7 +298,7 @@ public class UserInterface {
                 boolean financing = userinput.equalsIgnoreCase("yes");
                 double monthlyPayment = totalPrice / 12;
 
-                dealership.addContract(new Sale(date,
+                Sale sale = new Sale(date,
                         customerName,
                         vin,
                         email,
@@ -308,14 +309,15 @@ public class UserInterface {
                         recordingFee,
                         proccessingFee,
                         financing
-                ));
+                );
+                dealership.addContract(sale);
                 System.out.println("Sale contract completed and added successfully");
 
                 System.out.print("Would you like to create another contract? (yes or no): ");
                 String addOtherCont = keyboard.nextLine().trim();
 
                 if (addOtherCont.equalsIgnoreCase("no")) {
-                    contractDataManager.saveLeaseContract(dealership);
+                    contractDataManager.saveContract(sale, vin);
                     break;
                 } else {
                     return;
@@ -344,8 +346,11 @@ public class UserInterface {
                     break;
                 case 2:
                     for (Contract contract : dealership.getContracts()) {
+                        System.out.println(contract.getClass().getSimpleName());
                         System.out.println(contract.getCustomerName());
+                        System.out.println(contract.getEmail());
                         System.out.println("Monthly Payment: " + contract.getMonthlyPayment());
+                        System.out.println("--------");
                     }
                     break;
                 case 3:
