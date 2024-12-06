@@ -3,11 +3,12 @@ package com.pluralsight;
 public class Sale extends Contract{
 
    private double salesTaxAmount;
-    private int recordingFee,processingFee;
+    private int VIN, recordingFee,processingFee;
     private boolean wantToFinance;
 
-    public Sale(String date, String customerName, String email, boolean vehicleSold, double totalPrice, double monthlyPayment, double salesTaxAmount, int recordingFee, int processingFee, boolean wantToFinance) {
+    public Sale(String date, String customerName, int VIN, String email, boolean vehicleSold, double totalPrice, double monthlyPayment, double salesTaxAmount, int recordingFee, int processingFee, boolean wantToFinance) {
         super(date, customerName, email, vehicleSold, totalPrice, monthlyPayment);
+        this.VIN = VIN;
         this.salesTaxAmount = .05;
         this.recordingFee = 100;
         this.processingFee = processingFee;

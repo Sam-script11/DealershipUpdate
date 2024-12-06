@@ -1,61 +1,69 @@
 package com.pluralsight;
 
-import com.sun.source.tree.NewArrayTree;
-
 import java.util.Scanner;
 
 public class Main  {
     static final Scanner keyboard = new Scanner(System.in);
+
     public static void main(String[] args) {
+        if (args.length != 2) {
+            System.out.println("We have a problem, please provide a username and password for database");
+            System.exit(1);
+        }
+
         Dealership dealership = new Dealership();
+
+        UserInterface userInterface = new UserInterface(args);
+
         while (true) {
             System.out.printf("Welcome to %s's Auto Shop! \n", dealership.getName());
             UserInterface.display();
             int userInput = Integer.parseInt(keyboard.nextLine());
             System.out.println("-----------");
+
             switch (userInput) {
                 case 1:
-                    UserInterface.processgetByPriceRequest();
+                    userInterface.processGetByPriceRequest();
                     System.out.println("-----------");
-
                     break;
                 case 2:
-                    UserInterface.processGetBymakeModelrequest();
+                    userInterface.processGetByMakeModelRequest();
                     System.out.println("-----------");
                     break;
                 case 3:
-                    UserInterface.processgetByYearRequest();
+                    userInterface.processGetByYearRequest();
                     System.out.println("-----------");
                     break;
                 case 4:
-                    UserInterface.processGetByColorRequest();
+                    userInterface.processGetByColorRequest();
                     System.out.println("-----------");
                     break;
                 case 5:
-                    UserInterface.processGetByMileageRequest();
+                    userInterface.processGetByMileageRequest();
                     System.out.println("-----------");
                     break;
                 case 6:
-                    UserInterface.processGetByVehicleTypeRequest();
+                    userInterface.processGetByVehicleTypeRequest();
                     System.out.println("-----------");
                     break;
                 case 7:
-                    UserInterface.processGetAllVehiclesRequest();
+                    userInterface.processGetAllVehiclesRequest();
                     System.out.println("-----------");
                     break;
                 case 8:
-                    UserInterface.processAddVehicleRequest();
+                    userInterface.processAddVehicleRequest();
                     System.out.println("-----------");
                     break;
                 case 9:
-                    UserInterface.processRemoveVehicleRequest();
+                    userInterface.processRemoveVehicleRequest();
                     System.out.println("-----------");
                     break;
                 case 10:
-                    UserInterface.contractScreen();
+                    userInterface.contractScreen();
                     System.out.println("-----------");
                     break;
                 case 99:
+                    System.out.println("Thank you for visiting!");
                     System.exit(0);
             }
         }
