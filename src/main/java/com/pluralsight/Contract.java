@@ -47,5 +47,6 @@ public abstract class Contract {
     }
 
     public abstract double getTotalPrice();
-    public abstract void getMonthlyPayment();
+
+    public abstract double getMonthlyPayment();
 }

@@ -1,82 +1,45 @@
 package com.pluralsight;
 
-import javax.swing.text.DefaultEditorKit;
-import java.io.*;
-import java.util.regex.Pattern;
+import org.apache.commons.dbcp2.BasicDataSource;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class ContractDataManager {
 
-//Contract testCon = new Sale("10/31/2024","Sam",true,25000.00,0,125.00,25,25,false);
+    private final BasicDataSource dataSource;
 
-    public static void getContracts(Dealership dealership) {
+    public ContractDataManager(String username, String password) {
+        this.dataSource = new BasicDataSource();
+        this.dataSource.setUrl("jdbc:mysql://localhost:3306/dealership_workshop");
+        this.dataSource.setUsername(username);
+        this.dataSource.setPassword(password);
+    }
 
+    public void getContracts(Dealership dealership) {
+        try (Connection connection = dataSource.getConnection()) {
+            //Try block handles lease_contract table
+            try (PreparedStatement preparedStatement = connection.prepareStatement("""
+                    SELECT * FROM lease_contracts""");
+                 ResultSet results = preparedStatement.executeQuery()) {
 
-        try {
-            FileReader fr = new FileReader("src/main/resources/contracts.csv");
-            // create a BufferedReader to manage input stream
-            BufferedReader br = new BufferedReader(fr);
-            String input;
-            // read until there is no more data
-            while ((input = br.readLine()) != null) {
-                 //SALE|20210928|Dana Wyatt|dana@texas.com|10112|1993|Ford|Explorer|SUV|Red|525123|995.00|49.75|100.00|295.00|1439.75|NO|0.00
-
-                if (input.startsWith("SALE")) {
-
-                    String[] lineSplit = input.split(Pattern.quote("|"));
-                    String contractType = lineSplit[0];
-                    String date = lineSplit[1];
-                    String customerName = lineSplit[2];
-                    String email = lineSplit[3];
-                    String vin = lineSplit[4];
-                    int year = Integer.parseInt(lineSplit[5]);
-                    String make = lineSplit[6];
-                    String model = lineSplit[7];
-                    String vehicleType = lineSplit[8];
-                    String color = lineSplit[9];
-                    int odometer = Integer.parseInt(lineSplit[10]);
-                    double price = Double.parseDouble(lineSplit[11]);
-                    double salesTax = Double.parseDouble(lineSplit[12]);
-                    double recordingFee = Double.parseDouble(lineSplit[13]);
-                    double processingFee= Double.parseDouble(lineSplit[14]);
-                    double totalPrice = Double.parseDouble(lineSplit[15]);
-                    boolean financing = Boolean.parseBoolean(lineSplit[16]);
-                    double monthlyPayment = Double.parseDouble(lineSplit[17]);
-
-                    int recordingFeeSale = (int) recordingFee;
-                    int processingFeeSale = (int) processingFee;
-                    dealership.addContract(new Sale(date,
-                            customerName,
-                            email,
-                            true,
-                            totalPrice,
-                            monthlyPayment,
-                            salesTax,
-                            recordingFeeSale,
-                            processingFeeSale,
-                            financing));
-                }else{
-                    //LEASE|20210928|Zachary Westly|zach@texas.com|37846|2021|Chevrolet|Silverado|truck|Black|2750|31995.00|15997.50|2239.65|18337.15|541.39
-                    String[] lineSplit = input.split(Pattern.quote("|"));
-                    String contractType = lineSplit[0];
-                    String date = lineSplit[1];
-                    String customerName = lineSplit[2];
-                    String email = lineSplit[3];
-                    String vin = lineSplit[4];
-                    int year = Integer.parseInt(lineSplit[5]);
-                    String make = lineSplit[6];
-                    String model = lineSplit[7];
-                    String vehicleType = lineSplit[8];
-                    String color = lineSplit[9];
-                    int odometer = Integer.parseInt(lineSplit[10]);
-                    double price = Double.parseDouble(lineSplit[11]);
-                    double expectedEndingValue = Double.parseDouble(lineSplit[12]);
-                    double leaseFee = Double.parseDouble(lineSplit[13]);
-                    double totalPrice= Double.parseDouble(lineSplit[14]);
-                    double monthlyPayment = Double.parseDouble(lineSplit[15]);
+                while (results.next()) {
+                    String date = results.getString("date");
+                    int vin = results.getInt("VIN");
+                    ;
+                    String customerName = results.getString("CustomerName");
+                    String email = results.getString("Email");
+                    double totalPrice = results.getDouble("TotalPrice");
+                    double monthlyPayment = results.getDouble("MonthlyPayment");
+                    double expectedEndingValue = results.getDouble("ExpectedEndingValue");
+                    double leaseFee = results.getDouble("LeaseFee");
 
                     dealership.addContract(new Lease(
                             date,
                             customerName,
+                            vin,
                             email,
                             false,
                             totalPrice,
@@ -84,46 +47,128 @@ public class ContractDataManager {
                             expectedEndingValue,
                             leaseFee));
                 }
+
+            } catch (SQLException e) {
+                throw new SQLException(e);
             }
 
-            br.close();
+            //Try block handles sales_contract table
+            try (PreparedStatement preparedStatement = connection.prepareStatement("""
+                    SELECT * FROM sales_contracts""");
+                 ResultSet results = preparedStatement.executeQuery()) {
 
-        } catch (IOException e) {
+                while (results.next()) {
+                    String date = results.getString("date");
+                    String customerName = results.getString("CustomerName");
+                    int vin = results.getInt("VIN");
+                    String email = results.getString("Email");
+                    double totalPrice = results.getDouble("TotalPrice");
+                    double monthlyPayment = results.getDouble("MonthlyPayment");
+                    double salesTax = results.getDouble("SalesTaxAmount");
+                    int recordingFee = results.getInt("RecordingFee");
+                    int processingFee = results.getInt("ProcessingFee");
+                    boolean financing = results.getBoolean("WantToFinance");
+
+                    dealership.addContract(new Sale(date,
+                            customerName,
+                            vin,
+                            email,
+                            true,
+                            totalPrice,
+                            monthlyPayment,
+                            salesTax,
+                            recordingFee,
+                            processingFee,
+                            financing));
+                }
+
+            } catch (SQLException e) {
+                throw new SQLException(e);
+            }
+
+
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
-    public static  void saveContract(Dealership contracts) {
 
-      //  Contract testCon = new Sale("10/31/2024","Sam",true,25000.00,0,125.00,25,25,false);
+    public void saveContract(Contract contract, int VIN) {
+//            String contractType, date, customerName, email, make = "", model = "", vehicleType = "", color = "";
+//            int vin = 0, odometer = 0, year = 0;
+//            double price = 0, salesTax, recordingFee, processingFee, totalPrice, monthlyPayment;
+//            boolean financing, vehicleSold;
 
-        try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter("src/main/resources/contracts.csv",true));
-//String typeOfcontract = testCon.getClass().getSimpleName().toUpperCase();
-//            vin = vehicle.getVin();
-//            year = vehicle.getYear();
-//            model = vehicle.getModel();
-//            make = vehicle.getMake();
-//            vehicleType = vehicle.getVehicleType();
-//            color = vehicle.getColor();
-//            odometer = vehicle.getOdometer();
-//            price = vehicle.getPrice();
+        try (Connection connection = dataSource.getConnection()) {
 
-            for (Contract contract: contracts.getContracts()){
-                if (contract instanceof Lease){
+            if (contract instanceof Sale) {
+                try (PreparedStatement preparedStatement = connection.prepareStatement("""
+                         INSERT INTO sales_contracts (date, VIN, CustomerName, Email, VehicleSold, TotalPrice,\s
+                         MonthlyPayment, SalesTaxAmount, RecordingFee, ProcessingFee, WantToFinance )
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        \s""", PreparedStatement.RETURN_GENERATED_KEYS)) {
 
-                    //String leaseEntry = String.format("%s|%d|%s|%s|%s|%s|%d|%.2f\n",contract.date,contract.customerName,contract.vehicleSold,contract.totalPrice,contract.monthlyPayment);
-                   // bw.write(leaseEntry);
+                    preparedStatement.setString(1, contract.getDate());
+                    preparedStatement.setInt(2, VIN);
+                    preparedStatement.setString(3, contract.getCustomerName());
+                    preparedStatement.setString(4, contract.getEmail());
+                    preparedStatement.setBoolean(5, contract.isVehicleSold());
+                    preparedStatement.setDouble(6, contract.getTotalPrice());
+                    preparedStatement.setDouble(7, contract.getMonthlyPayment());
+                    preparedStatement.setDouble(8, ((Sale) contract).getSalesTaxAmount());
+                    preparedStatement.setInt(9, ((Sale) contract).getRecordingFee());
+                    preparedStatement.setInt(10, ((Sale) contract).getProcessingFee());
+                    preparedStatement.setBoolean(11, ((Sale) contract).isWantToFinance());
 
+                    int rows = preparedStatement.executeUpdate();
 
+                    System.out.printf("Rows updated: %d\n", rows);
 
+                    try (ResultSet keys = preparedStatement.getGeneratedKeys()) {
+                        while (keys.next()) {
+                            System.out.printf("%d key was added\n", keys.getInt(1));
+                        }
+
+                    } catch (SQLException e) {
+                        throw new SQLException(e);
+                    }
+                }
+            } else if (contract instanceof Lease) {
+                try (PreparedStatement preparedStatement = connection.prepareStatement("""
+                        INSERT INTO lease_contracts (date, VIN, CustomerName, Email, VehicleSold, TotalPrice, MonthlyPayment,
+                        ExpectedEndingValue, LeaseFee)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, PreparedStatement.RETURN_GENERATED_KEYS)) {
+
+                    preparedStatement.setString(1, contract.getDate());
+                    preparedStatement.setInt(2, VIN);
+                    preparedStatement.setString(3, contract.getCustomerName());
+                    preparedStatement.setString(4, contract.getEmail());
+                    preparedStatement.setBoolean(5, contract.isVehicleSold());
+                    preparedStatement.setDouble(6, contract.getTotalPrice());
+                    preparedStatement.setDouble(7, contract.getMonthlyPayment());
+                    preparedStatement.setDouble(8, ((Lease) contract).getExpectedEndingValue());
+                    preparedStatement.setDouble(9, ((Lease) contract).getLeaseFee());
+
+                    int rows = preparedStatement.executeUpdate();
+
+                    System.out.printf("Rows updated: %d\n", rows);
+
+                    try (ResultSet keys = preparedStatement.getGeneratedKeys()) {
+                        while (keys.next()) {
+                            System.out.printf("%d key was added\n", keys.getInt(1));
+                        }
+
+                    }
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
                 }
             }
-
-            //Release file
-            bw.close();
-        } catch (IOException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+
     }
+
+
 }
 
